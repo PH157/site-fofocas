@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel Admin - Fofocas</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 40px 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .fofoca {
+      background: #222;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+    button {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .login {
+      text-align: center;
+      margin-top: 50px;
+    }
+    input {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    async function login() {
+      const user = document.getElementById("user").value;
+      const pass = document.getElementById("pass").value;
+      const res = await fetch("/admin-login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ user, pass })
+      });
+      if (res.ok) {
+        location.reload();
+      } else {
+        alert("Acesso negado.");
+      }
+    }
+
+    async function carregarFofocas() {
+      const res = await fetch("/api/all-fofocas");
+      const data = await res.json();
+      const app = document.getElementById("app");
+      app.innerHTML = "<h1>Painel de Fofocas</h1>";
+      data.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "fofoca";
+        div.innerHTML = `<b>${new Date(f.data).toLocaleString()}</b><br>${f.texto}<br><button onclick="excluir(${f.id})">Excluir</button>`;
+        app.appendChild(div);
+      });
+    }
+
+    async function excluir(id) {
+      await fetch("/api/fofocas/" + id, { method: "DELETE" });
+      carregarFofocas();
+    }
+
+    async function verificarSessao() {
+      const res = await fetch("/admin-check");
+      if (res.ok) {
+        carregarFofocas();
+      } else {
+        document.getElementById("app").innerHTML = `
+          <div class='login'>
+            <h1>Login Admin</h1>
+            <input id='user' placeholder='Usuário'><br>
+            <input id='pass' type='password' placeholder='Senha'><br>
+            <button onclick='login()'>Entrar</button>
+          </div>
+        `;
+      }
+    }
+
+    verificarSessao();
+  </script>
+</body>
+</html>
